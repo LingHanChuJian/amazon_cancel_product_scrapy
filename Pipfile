@@ -1,0 +1,15 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+scrapy = "*"
+twisted = {path = "./Twisted-19.2.1-cp36-cp36m-win_amd64.whl"}
+pywin32 = {path = "./pywin32-224-cp36-cp36m-win_amd64.whl"}
+fake-useragent = "*"
+
+[requires]
+python_version = "3.6"

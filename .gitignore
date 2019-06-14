@@ -1,0 +1,14 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/Gui-Amazon-Review.iml
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/workspace.xml
+.idea/
+__pycache__/
+build/
+dist/
+.vscode/
+pywin32-224-cp36-cp36m-win_amd64.whl
+Twisted-19.2.1-cp36-cp36m-win_amd64.whl
+amazon_cancel_product_scrapy/amazon.txt
