@@ -1,6 +1,5 @@
 import re
 import json
-import random
 import scrapy
 from scrapy.http import Request, FormRequest
 from amazon_cancel_product_scrapy.items import AmazonCancelProductScrapyItemLoader, AmazonCancelProductScrapyItem
@@ -38,22 +37,14 @@ class CancelProductSpider(scrapy.Spider):
                                               alias=cur_country_data['alias'][int(alias)], keyword=keyword)
         yield Request(url=cur_country_data['domain'],
                       meta={'country': country, 'max_page': max_page,
-                            'url': quote(url, ':?=/'), 'cookiejar': COOKIE_NUM},
-                      callback=self.address_requests)
+                            'url': quote(url, ':?=/&'), 'cookiejar': COOKIE_NUM},
+                      headers=START_REQUESTS_HEADERS, callback=self.address_requests)
 
     def address_requests(self, response):
         cur_data = response.meta
         if self.is_robot(response):
             log('机器人验证')
             return None
-        header = {
-            'accept': 'text/html,*/*',
-            'accept-language': 'zh-CN,zh;q=0.9',
-            'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'x-requested-with': 'XMLHttpRequest'
-        }
         zip_code = AMAZON_DOMAIN[cur_data['country']]['zipCode']
         form_data = {
             'locationType': 'LOCATION_INPUT',
@@ -69,7 +60,8 @@ class CancelProductSpider(scrapy.Spider):
             form_data['city'] = zip_code
             form_data['cityName'] = zip_code
         yield FormRequest(url=amazon_url_api['address'].format(domain=AMAZON_DOMAIN[cur_data['country']]['domain']),
-                          headers=header, formdata=form_data, meta=cur_data, callback=self.search_requests)
+                          headers=ADDRESS_REQUESTS_HEADERS, formdata=form_data,
+                          meta=cur_data, callback=self.search_requests)
 
     def search_requests(self, response):
         cur_data = response.meta
@@ -79,7 +71,8 @@ class CancelProductSpider(scrapy.Spider):
             is_address = 'address' in address and 'zipCode' in address['address']
             if is_country or is_address:
                 log('国家为AU, 需要登陆才能更换地址') if is_country else log('更换对应国家地址')
-                yield Request(url=cur_data['url'], meta=cur_data, callback=self.review_requests)
+                yield Request(url=cur_data['url'], headers=SEARCH_REQUESTS_HEADERS,
+                              meta=cur_data, callback=self.review_requests)
             else:
                 log('更换地址失败')
         else:
@@ -90,11 +83,11 @@ class CancelProductSpider(scrapy.Spider):
         if self.is_robot(response):
             log('机器人验证')
             return None
-        save_log(response.text)
-        for item in response.xpath('//div[@data-asin]/@data-asin'):
+        for i, item in enumerate(response.xpath('//div[@data-asin]/@data-asin')):
+            cur_data['cookiejar'] = COOKIE_NUM + 1 + i
             yield Request(url=amazon_url_api['review']
                           .format(domain=AMAZON_DOMAIN[cur_data['country']]['domain'], asin=item.extract()),
-                          meta=cur_data, callback=self.user_requests)
+                          headers=REVIEW_REQUESTS_HEADERS, meta=cur_data, callback=self.user_requests)
         search_next_api = self.get_next_page(response)
         cur_page = self.get_cur_search_page(response)
         max_page = cur_data['max_page']
@@ -105,19 +98,19 @@ class CancelProductSpider(scrapy.Spider):
             log('搜索页面, 准备爬取第{page}页搜索数据'.format(page=int(cur_page) + 1))
             yield Request(url='{domain}{search_next_api}'
                           .format(domain=AMAZON_DOMAIN[cur_data['country']]['domain'], search_next_api=search_next_api),
-                          meta=cur_data, callback=self.review_requests)
+                          headers=REVIEW_REQUESTS_HEADERS,meta=cur_data, callback=self.review_requests)
         else:
-            if int(cur_page) < int(max_page):
+            if int(cur_page) <= int(max_page):
                 log('搜索页面 , 准备爬取第{page}页搜索数据'.format(page=int(cur_page) + 1))
                 yield Request(url='{domain}{search_next_api}'
                               .format(domain=AMAZON_DOMAIN[cur_data['country']]['domain'],
-                                      search_next_api=search_next_api), meta=cur_data, callback=self.review_requests)
+                                      search_next_api=search_next_api), headers=REVIEW_REQUESTS_HEADERS,
+                              meta=cur_data, callback=self.review_requests)
             else:
                 log('搜索页面 ,已到达设置的指定页数, 不会进行继续爬取了')
 
     def user_requests(self, response):
         cur_data = response.meta
-        cur_data['cookiejar'] = random.randint(COOKIE_NUM + 1, COOKIE_MAX_NUM)
         if self.is_robot(response):
             log('机器人验证')
             return None
@@ -127,7 +120,7 @@ class CancelProductSpider(scrapy.Spider):
             yield Request(url='{domain}{review_buyer}'
                           .format(domain=AMAZON_DOMAIN[cur_data['country']]['domain'],
                                   review_buyer=review_buyer.extract_first('')),
-                          meta=cur_data, callback=self.user_review_requests)
+                          headers=USER_REQUESTS_HEADERS, meta=cur_data, callback=self.user_review_requests)
         review_next_api = self.get_next_page(response)
         review_cur_page = self.get_cur_review_page(response)
         if not review_next_api:
@@ -136,14 +129,14 @@ class CancelProductSpider(scrapy.Spider):
         log('产品评论页面, 准备爬取第{page}页评论数据'.format(page=review_cur_page + 1))
         yield Request(url='{domain}{review_next_api}'
                       .format(domain=AMAZON_DOMAIN[cur_data['country']]['domain'], review_next_api=review_next_api),
-                      meta=cur_data, callback=self.user_requests)
+                      headers=USER_REQUESTS_HEADERS, meta=cur_data, callback=self.user_requests)
 
     def user_review_requests(self, response):
         cur_data = response.meta
-        cur_data['cookiejar'] = random.randint(COOKIE_NUM + 1, COOKIE_MAX_NUM)
         if self.is_robot(response):
             log('机器人验证')
             return None
+        save_log(response.text)
         if self.is_json(response.text):
             user_review_data = json.loads(response.text)
             if 'contributions' in user_review_data:
@@ -152,17 +145,17 @@ class CancelProductSpider(scrapy.Spider):
                             and not item['product']['link']:
                         yield Request(amazon_url_api['review_details'].format(
                             domain=AMAZON_DOMAIN[cur_data['country']]['domain'], reviewId=item['externalId']),
-                            meta=cur_data)
+                            headers=REVIEW_DETAILS_HEADERS, meta=cur_data)
             user_review_next_page = self.get_user_review_next_page_token(response)
             if not user_review_next_page:
                 log('用户评论页面, 没有下一页了')
                 return None
             log('用户评论页面, 准备获取下一页数据')
-            yield Request(url=amazon_url_api['user_review']
+            yield Request(url=quote(amazon_url_api['user_review']
                           .format(domain=AMAZON_DOMAIN[cur_data['country']]['domain'],
                                   next_token=user_review_next_page, type=cur_data['types'],
-                                  directedId=cur_data['directed_id'], token=cur_data['token']),
-                          meta=cur_data, callback=self.user_review_requests)
+                                  directedId=cur_data['directed_id'], token=cur_data['token']), ':?=/&'),
+                          headers=USER_REVIEW_REQUESTS_HEADERS, meta=cur_data, callback=self.user_review_requests)
         else:
             token = self.get_user_review_token(response)
             types = self.get_user_review_type(response)
@@ -170,9 +163,10 @@ class CancelProductSpider(scrapy.Spider):
             cur_data['token'] = token
             cur_data['types'] = types
             cur_data['directed_id'] = directed_id
-            yield Request(url=amazon_url_api['user_review']
+            yield Request(url=quote(amazon_url_api['user_review']
                           .format(domain=AMAZON_DOMAIN[cur_data['country']]['domain'],
-                                  next_token='', type=types, directedId=directed_id, token=token),
+                                  next_token='', type=types, directedId=directed_id, token=token), ':?=/&'),
+                          headers=USER_REVIEW_REQUESTS_HEADERS,
                           meta=cur_data, callback=self.user_review_requests)
 
     def parse(self, response):

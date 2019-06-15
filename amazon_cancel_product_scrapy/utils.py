@@ -122,6 +122,36 @@ amazon_url_api = {
     'review_details': '{domain}/gp/customer-reviews/{reviewId}?ref=pf_vv_at_pdctrvw_srp'
 }
 
+# 请求 headers
+START_REQUESTS_HEADERS = SEARCH_REQUESTS_HEADERS = REVIEW_REQUESTS_HEADERS = USER_REQUESTS_HEADERS = REVIEW_DETAILS_HEADERS = {
+    'accept': 'text/html,application/xhtml+xml,'
+              'application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'zh-CN,zh;q=0.9',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'none',
+    'sec-fetch-user': '?1',
+    'upgrade-insecure-requests': '1'
+}
+
+ADDRESS_REQUESTS_HEADERS = {
+    'accept': 'text/html,*/*',
+    'accept-language': 'zh-CN,zh;q=0.9',
+    'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'x-requested-with': 'XMLHttpRequest'
+}
+
+USER_REVIEW_REQUESTS_HEADERS = {
+    'accept': '*/*',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'zh-CN,zh;q=0.9',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'x-requested-with': 'XMLHttpRequest'
+}
+
 # 需要添加和修改代理、ua 链接
 PROXY_UA_URL = ['product-reviews', 'profilewidget', 'customer-reviews', 'profile']
 
@@ -146,3 +176,5 @@ RE_REVIEW_DETAILS_ASIN = r'/dp/(.*)/'
 COOKIE_NUM = 1
 
 COOKIE_MAX_NUM = 99999
+
+COOKIE_USER_REVIEW_NUM = 100000

@@ -83,7 +83,6 @@ class AmazonCancelProductScrapyDownloaderMiddleware(object):
         # Called for each request that goes through the downloader
         # middleware.
         if self.is_add_proxy(request.url):
-            request.headers['referer'] = None
             request.headers.setdefault('User-Agent', UserAgent().random)
             request.meta['proxy'] = proxy_server
             request.headers['Proxy-Authorization'] = proxy_auth
