@@ -18,16 +18,12 @@ class AmazonCancelProductScrapyItemLoader(ItemLoader):
 
 def get_review_details_star(value):
     star = re.search(RE_REVIEW_DETAILS_STAR, value, re.M)
-    if not star:
-        return ''
-    return star.group()
+    return star.group() if star else ''
 
 
 def get_review_details_asin(value):
     asin = re.search(RE_REVIEW_DETAILS_ASIN, value, re.M)
-    if not asin:
-        return ''
-    return asin.group(1)
+    return asin.group(1) if asin else ''
 
 
 class AmazonCancelProductScrapyItem(scrapy.Item):
@@ -38,6 +34,9 @@ class AmazonCancelProductScrapyItem(scrapy.Item):
     )
     star = scrapy.Field(
         input_processor=MapCompose(get_review_details_star)
+    )
+    all_review_num = scrapy.Field(
+        input_processor=MapCompose(lambda x: int(x) if x else 0)
     )
     is_image = scrapy.Field()
     # input_processor=MapCompose(lambda x: '有' if x else '没有')

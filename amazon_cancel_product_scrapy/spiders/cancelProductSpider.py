@@ -136,7 +136,6 @@ class CancelProductSpider(scrapy.Spider):
         if self.is_robot(response):
             log('机器人验证')
             return None
-        save_log(response.text)
         if self.is_json(response.text):
             user_review_data = json.loads(response.text)
             if 'contributions' in user_review_data:
@@ -174,12 +173,17 @@ class CancelProductSpider(scrapy.Spider):
         if self.is_robot(response):
             log('机器人验证')
             return None
+        is_asin_404 = response.xpath('//img[@data-a-hires]/@src').extract_first('')
+        if is_asin_404.find('no-img-lg') <= -1:
+            log('asin 被人占用')
+            return None
         amazon_item = AmazonCancelProductScrapyItemLoader(item=AmazonCancelProductScrapyItem(), response=response)
         is_image = response.xpath('//div[@class="review-image-tile-section"]').extract_first('')
         product_url = response.xpath('//a[@data-hook="product-link"]/@href').extract_first('')
         user_url = response.xpath('//a[@class="a-profile"]/@href').extract_first('')
         amazon_item.add_xpath('asin', '//a[@data-hook="product-link"]/@href')
         amazon_item.add_xpath('star', '//span[@data-hook="rating-out-of-text"]//text()')
+        amazon_item.add_xpath('all_review_num', '//span[@data-hook="total-review-count"]//text()')
         amazon_item.add_value('is_image', ['有' if is_image else '没有'])
         amazon_item.add_value('product_url', ['{domain}{product_url}'.format(
             domain=AMAZON_DOMAIN[cur_data['country']]['domain'], product_url=product_url)])

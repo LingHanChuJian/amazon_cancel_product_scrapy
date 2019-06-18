@@ -9,8 +9,8 @@ import csv
 import time
 import winreg
 
-NEED = ('asin', 'star', 'is_image', 'product_url', 'review_url', 'user_url')
-NEED_DOC = ('asin', '星级', '评论是否包含图片', '产品链接', '评论链接', '买家链接')
+NEED = ('asin', 'star', 'all_review_num', 'is_image', 'product_url', 'review_url', 'user_url')
+NEED_DOC = ('asin', '星级', '评论总数', '评论是否包含图片', '产品链接', '评论链接', '买家链接')
 FILENAME = 'Amazon_Cancel_Product_%Y_%m_%d_%H_%M.csv'
 
 
