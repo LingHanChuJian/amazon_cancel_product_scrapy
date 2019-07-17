@@ -12,8 +12,8 @@ from fake_useragent import UserAgent
 UA = UserAgent().random
 
 proxy_server = 'http://http-pro.abuyun.com:9010'
-proxy_user = ''
-proxy_password = ''
+proxy_user = 'HR2SY1HYV298U91P'
+proxy_password = '8574D41BD7F4A767'
 
 proxy_auth = 'Basic {}'\
     .format(base64.urlsafe_b64encode(bytes(('{}:{}'.format(proxy_user, proxy_password)), 'ascii')).decode('utf8'))
@@ -82,12 +82,12 @@ class AmazonCancelProductScrapyDownloaderMiddleware(object):
     def process_request(self, request, spider):
         # Called for each request that goes through the downloader
         # middleware.
-        if self.is_add_proxy(request.url):
-            request.headers.setdefault('User-Agent', UserAgent().random)
-            request.meta['proxy'] = proxy_server
-            request.headers['Proxy-Authorization'] = proxy_auth
-        else:
-            request.headers.setdefault('User-Agent', UA)
+        # if self.is_add_proxy(request.url):
+        request.headers.setdefault('User-Agent', UserAgent().random)
+        request.meta['proxy'] = proxy_server
+        request.headers['Proxy-Authorization'] = proxy_auth
+        # else:
+        #     request.headers.setdefault('User-Agent', UA)
         # Must either:
         # - return None: continue processing this request
         # - or return a Response object

@@ -32,11 +32,12 @@ class AmazonCancelProductScrapyItem(scrapy.Item):
     asin = scrapy.Field(
         input_processor=MapCompose(get_review_details_asin)
     )
-    star = scrapy.Field(
-        input_processor=MapCompose(get_review_details_star)
-    )
+    star = scrapy.Field()
+    # star = scrapy.Field(
+    #     input_processor=MapCompose(get_review_details_star)
+    # )
     all_review_num = scrapy.Field(
-        input_processor=MapCompose(lambda x: int(x) if x else 0)
+        input_processor=MapCompose(lambda x: int(x.replace(',', '')) if x else 0)
     )
     is_image = scrapy.Field()
     # input_processor=MapCompose(lambda x: '有' if x else '没有')

@@ -6,7 +6,7 @@ from amazon_cancel_product_scrapy.items import AmazonCancelProductScrapyItemLoad
 from urllib.parse import quote
 
 from ..utils import *
-from ..log import log, save_log
+from ..log import log
 
 
 class CancelProductSpider(scrapy.Spider):
@@ -181,8 +181,15 @@ class CancelProductSpider(scrapy.Spider):
         is_image = response.xpath('//div[@class="review-image-tile-section"]').extract_first('')
         product_url = response.xpath('//a[@data-hook="product-link"]/@href').extract_first('')
         user_url = response.xpath('//a[@class="a-profile"]/@href').extract_first('')
+        star = response.xpath('//span[@data-hook="rating-out-of-text"]//text()').extract_first('')
+        star_value = re.compile(RE_REVIEW_DETAILS_STAR).findall(star)
+        if cur_data['country'] == 'JP':
+            star_value = star_value[-1] if len(star_value) == 2 else 0
+        else:
+            star_value = star_value[0]
         amazon_item.add_xpath('asin', '//a[@data-hook="product-link"]/@href')
-        amazon_item.add_xpath('star', '//span[@data-hook="rating-out-of-text"]//text()')
+        amazon_item.add_value('star', [star_value])
+        # amazon_item.add_xpath('star', '//span[@data-hook="rating-out-of-text"]//text()')
         amazon_item.add_xpath('all_review_num', '//span[@data-hook="total-review-count"]//text()')
         amazon_item.add_value('is_image', ['有' if is_image else '没有'])
         amazon_item.add_value('product_url', ['{domain}{product_url}'.format(
@@ -195,9 +202,7 @@ class CancelProductSpider(scrapy.Spider):
     @staticmethod
     def is_robot(response):
         robot = response.xpath('//form[@action="/errors/validateCaptcha"]')
-        if robot:
-            return True
-        return False
+        return True if robot else False
 
     @staticmethod
     def is_json(data):
