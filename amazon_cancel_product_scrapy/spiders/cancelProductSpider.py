@@ -181,7 +181,7 @@ class CancelProductSpider(scrapy.Spider):
         is_image = response.xpath('//div[@class="review-image-tile-section"]').extract_first('')
         product_url = response.xpath('//a[@data-hook="product-link"]/@href').extract_first('')
         user_url = response.xpath('//a[@class="a-profile"]/@href').extract_first('')
-        star = response.xpath('//span[@data-hook="rating-out-of-text"]//text()').extract_first('')
+        star = response.xpath('//i[@data-hook="average-star-rating"]//text()').extract_first('')
         star_value = re.compile(RE_REVIEW_DETAILS_STAR).findall(star)
         if cur_data['country'] == 'JP':
             star_value = star_value[-1] if len(star_value) == 2 else 0
